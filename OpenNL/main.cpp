@@ -5,12 +5,21 @@
  *      Author: matthieu
  */
 
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <iostream>
 #include "nl.h"
 
 
 using namespace std;
-int main(){
+using namespace cv;
+
+int main(int argc, char** argv){
+
+	
+		
 	nlNewContext();
 
 	nlSolverParameteri(NL_NB_VARIABLES, 3);

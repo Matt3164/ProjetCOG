@@ -2,6 +2,8 @@
 #include <highgui.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
+#include <fstream>
+#include <iostream>
 
 
 using namespace cv;
@@ -14,7 +16,7 @@ void InMatrix(int ind, Mat* inMat, Mat outMat){
 
 		for(int j = 0; j < outMat.cols; j++){
 
-			inMat->at<int>(indiceligne,ind) = outMat.at<int>(i,j);
+			inMat->at<float>(indiceligne,ind) = (float) outMat.at<uchar>(i,j);
 
 			indiceligne++;
 		}
@@ -23,30 +25,31 @@ void InMatrix(int ind, Mat* inMat, Mat outMat){
 	
 }
 
+void ToIndex(int indice, int col, int* tab){
+
+	if( (indice % col) == 0 ){
+		tab[1] = col;
+	}else{
+
+		tab[1] = indice % col;
+	}
+
+	tab[0] = int ((indice - tab[1]) / col) + 1;
+}
+
 int main(int argc, char** argv){
 
 	  Mat A = imread(argv[1], 0);
 	 
-	  Mat D(A, Rect(5,5,5,5));
-
-	  std::cout << D << std::endl;
-	  std::cout << "Taille de la matrice : " << D.rows << " " << D.cols << std::endl;
-	  std::cout << "Premier terme : " << (int) D.at<uchar>(0,0) << std::endl;
-	  std::cout << "Dernier terme : " << (int) D.at<uchar>(5,5) << std::endl;
-	  std::cout << A.rows << " " << A.cols << std::endl;
-
-	  int colbound = int(A.cols * A.rows / 5.);
-	  Mat M(25,colbound, CV_8UC3, Scalar(0));
-
-	  std::cout << "Je reprends la main " << std::endl;
-	  	  
-	  std::cout << A.rows << " " << A.cols << std::endl;
-
+	  int colbound = int(A.cols * A.rows / 4.);
+	  Mat M(25,colbound, CV_32F, Scalar(0));
+	  	  	  
+	  
 	  int indice = 0;
 
-	  for(int i = 0; i < A.cols-6; i+=6){
+	  for(int i = 0; i <= A.cols-5; i+=2){
 
-		  for(int j = 0; j < A.rows-6; j+=6){
+		  for(int j = 0; j <= A.rows-5; j+=2){
 
 			  Mat E(A, Rect(i,j,5,5));
 
@@ -54,34 +57,57 @@ int main(int argc, char** argv){
 			  indice++;
 			  }
 	  }
-
-	  std::cout << indice << std::endl;
-
-
-	  Mat feat(A, Rect(13,16,5,5));
-	  Mat Vectfeat(25,1, CV_32F, Scalar(0));
-
-	  InMatrix(0, &Vectfeat, feat);
-
-	  cv::flann::KDTreeIndexParams indexParams(5);
-
-	  //Create the index
 	  
-	  Mat features(M.rows, M.cols, CV_32F, Scalar(0));
+
 	  
-	  //std::cout << M(Range(1,5), Range(1,600)) << std::endl;
-	  std::cout << M.rows << " " << M.cols << std::endl;
-	  cv::flann::Index kdtree(features, indexParams);
+
+	  
+	  
+
+	  
+
+	  //cv::flann::KDTreeIndexParams indexParams(4);
+	  
+
+	  
+	  
+	  
 	  
 	  std::cout << "Performing a single search to find closest data point to mean : " << std::endl;
-	  
 
-	  
 
-	  
+	  std::vector<int> index(1);
+	  std::vector<float> dist(1);
+	  RNG rng;
+	  double result = 0;
 
+	  std::string dir = "test.txt";
+
+	  std::ofstream myfile;
+
+	  myfile.open(dir);
+	  myfile << "Test: \n";	  
+	  for(int j = 100; j < 10000; j+=100){
+		  result = 0;
+		  cv::flann::KMeansIndexParams indexParams(2056,j,cvflann::FLANN_CENTERS_KMEANSPP);
+		  cv::flann::Index kdtree(M.t(), indexParams);
+		  for(int i = 0; i < 100; i++){
+		  
+			  Mat feat(A, Rect(rng.uniform(0,A.cols-6),rng.uniform(0,A.rows-6),5,5));
+			  Mat Vectfeat(25,1, CV_32F, Scalar(0));
+			  InMatrix(0, &Vectfeat, feat);
 	  
+			  kdtree.knnSearch(Vectfeat.t(), index, dist, 1);
+
+	  		  std::cout << "(index, dist) : " << index[0] << " " << dist[0] << std::endl;
+			  result+=dist[0];
+
+		  }
+		  myfile << j << " " <<result << "\n";
 	  
+	  }
+
+	  myfile.close();
 	  return EXIT_SUCCESS;
 }
 
